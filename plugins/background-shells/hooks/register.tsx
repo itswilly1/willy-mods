@@ -140,16 +140,21 @@ export const register: Register = on => {
       .slice(0, SHOWN)
       .map(t => (t.startedAt === null ? t.label : `${t.label} ${elapsed(now - t.startedAt)}`))
     const more = n > SHOWN ? ` · +${n - SHOWN}` : ''
+    // Other mods' bands (mac-app-runner) draw under this one.
+    const below = await next(e)
 
     return (
-      <Box>
-        <Text backgroundColor={HIGHLIGHT} color={INK} bold>
-          {` ${TERMINAL_GLYPH} ${head} `}
-        </Text>
-        <Text backgroundColor={HIGHLIGHT} color={INK}>
-          {`· ${items.join(' · ')}${more} `}
-        </Text>
-        <Text dimColor>{'  /tasks para ver'}</Text>
+      <Box flexDirection="column">
+        <Box>
+          <Text backgroundColor={HIGHLIGHT} color={INK} bold>
+            {` ${TERMINAL_GLYPH} ${head} `}
+          </Text>
+          <Text backgroundColor={HIGHLIGHT} color={INK}>
+            {`· ${items.join(' · ')}${more} `}
+          </Text>
+          <Text dimColor>{'  /tasks para ver'}</Text>
+        </Box>
+        {below}
       </Box>
     )
   })

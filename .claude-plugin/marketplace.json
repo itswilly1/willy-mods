@@ -9,6 +9,31 @@
       "name": "background-shells",
       "source": "./plugins/background-shells",
       "description": "Yellow highlighter band above the prompt while shells run in the background"
+    },
+    {
+      "name": "screenshot-peek",
+      "source": "./plugins/screenshot-peek",
+      "description": "Small thumbnails of the screenshots Claude takes or reads, with a button that opens them"
+    },
+    {
+      "name": "push-gate",
+      "source": "./plugins/push-gate",
+      "description": "Blocks git push, deploys and publishes unless your own message asked for them"
+    },
+    {
+      "name": "mac-app-runner",
+      "source": "./plugins/mac-app-runner",
+      "description": "Band above the prompt for the Mac app Xcode built that is open now: how long it has run, a newer build, reopen and close"
+    },
+    {
+      "name": "icon-picker",
+      "source": "./plugins/icon-picker",
+      "description": "/icone picks a Nerd Font glyph for the project's .claude/icon, one no other project of yours uses"
+    },
+    {
+      "name": "spinner-ptbr",
+      "source": "./plugins/spinner-ptbr",
+      "description": "Portuguese spinner words and turn line: Matutando…, Garimpou por 3s"
     }
   ],
   "description": "Willy's Claude Code mods"

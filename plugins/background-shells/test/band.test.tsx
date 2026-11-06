@@ -75,3 +75,20 @@ test("a turn's end list replaces what the mod tracked", async ($, on) => {
   expect(await after.find({ type: 'Text', text: /segundo plano/ })).toBeUndefined()
   await after.unmount()
 })
+
+test("another mod's band still draws under this one", async ($, on) => {
+  mock.clock(on, { now: 0 })
+  on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('tool.call', () => ({ result: { stdout: '', stderr: '', interrupted: false, backgroundTaskId: 'b1' } }))
+  on('ui.render', ($, e) => {
+    const { Text } = $.ui.resolve(e)
+    return <Text>other band</Text>
+  })
+  await $.session.start({ cwd: '/', surface: 'terminal', isInteractive: true })
+  await $.tool.call({ tool: 'Bash', command: 'npm run dev', run_in_background: true })
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  expect(await ui.find({ type: 'Text', text: /1 shell em segundo plano/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: 'other band' })).toBeDefined()
+  await ui.unmount()
+})

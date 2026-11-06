@@ -1,0 +1,11 @@
+{
+  "name": "screenshot-peek",
+  "version": "0.1.0",
+  "description": "Small thumbnails of the screenshots Claude takes or reads, with a button that opens them",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Willy Fernandes"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/itswilly1/willy-mods"
+}

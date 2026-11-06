@@ -1,0 +1,11 @@
+{
+  "name": "mac-app-runner",
+  "version": "0.1.0",
+  "description": "Band above the prompt for the Mac app Xcode built that is open now: how long it has run, a newer build, reopen and close",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Willy Fernandes"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/itswilly1/willy-mods"
+}

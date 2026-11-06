@@ -1,0 +1,11 @@
+{
+  "name": "icon-picker",
+  "version": "0.1.0",
+  "description": "/icone picks a Nerd Font glyph for the project's .claude/icon, one no other project of yours uses",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Willy Fernandes"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/itswilly1/willy-mods"
+}
