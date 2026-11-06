@@ -1,0 +1,11 @@
+{
+  "name": "background-shells",
+  "version": "0.1.0",
+  "description": "Yellow highlighter band above the prompt while shells run in the background",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Willy Fernandes"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/itswilly1/willy-mods"
+}

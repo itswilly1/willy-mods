@@ -1,0 +1,15 @@
+{
+  "name": "willy-mods",
+  "owner": {
+    "name": "Willy Fernandes",
+    "url": "https://github.com/itswilly1"
+  },
+  "plugins": [
+    {
+      "name": "background-shells",
+      "source": "./plugins/background-shells",
+      "description": "Yellow highlighter band above the prompt while shells run in the background"
+    }
+  ],
+  "description": "Willy's Claude Code mods"
+}
