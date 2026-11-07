@@ -34,6 +34,11 @@
       "name": "spinner-ptbr",
       "source": "./plugins/spinner-ptbr",
       "description": "Portuguese spinner words and turn line: Matutando…, Garimpou por 3s"
+    },
+    {
+      "name": "end-go",
+      "source": "./plugins/end-go",
+      "description": "/end closes a session leaving the project ready to resume; /go picks it up in the next one"
     }
   ],
   "description": "Willy's Claude Code mods"
