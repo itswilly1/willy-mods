@@ -55,6 +55,14 @@ const VERCEL_SAFE = new Set([
 ])
 const SCRIPT = /^(deploy|release|publish)([:._-]|$)/
 
+// The projects where a plain push needs no ask: their git roots, kept in the
+// mod's store (outside every repository, so Claude can't grant it by writing a
+// file), set only by the person with /push-livre.
+const FREE_KEY = 'free-push'
+const COMMAND = 'push-livre'
+// Origins of a slash command that are the person's own hands.
+const TYPED = new Set(['composer', 'bridge', 'sdk'])
+
 function fold(text: string): string {
   return text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
 }
@@ -403,7 +411,65 @@ function brief(actions: readonly Action[], list: readonly Ask[]): string {
 
 function refusal(actions: readonly Action[], why: string): string {
   const what = actions.map(action => `"${action.label}"`).join(', ')
-  return `push-gate: bloqueei ${what} ${why}. Pergunte ao usuário antes, por exemplo "Posso fazer o push?", e só rode de novo depois que ele autorizar.`
+  const free = actions.every(action => action.kind === 'push')
+    ? ` Para não perguntar mais neste projeto, o usuário pode digitar /${COMMAND}.`
+    : ''
+  return `push-gate: bloqueei ${what} ${why}. Pergunte ao usuário antes, por exemplo "Posso fazer o push?", e só rode de novo depois que ele autorizar.${free}`
+}
+
+async function freeRoots($: EngineInterface): Promise<string[]> {
+  const value = await $.store.get(FREE_KEY).catch(() => undefined)
+  return Array.isArray(value) ? value.filter((root): root is string => typeof root === 'string') : []
+}
+
+/**
+ * A place a command moves to (`cd`, `pushd`, `git -C`, `--git-dir`, `--work-tree`)
+ * that stays inside `root`: an absolute path under it, or a relative one that
+ * never climbs out. `~` and variables can't be read here, so they don't count.
+ */
+function staysInside(place: string, root: string): boolean {
+  if (place === '' || place.startsWith('~') || place.includes('$')) return false
+  if (place.startsWith('/')) {
+    const clean = place.replace(/\/+$/, '')
+    return clean === root || clean.startsWith(`${root}/`)
+  }
+  return !place.split('/').includes('..')
+}
+
+/** Does every directory the command moves to stay in the project at `root`? */
+function staysIn(command: string, root: string): boolean {
+  for (const argv of simpleCommands(command)) {
+    const words = unwrap(argv)
+    const name = base(words[0] ?? '')
+    if (name === 'cd' || name === 'pushd') {
+      const place = words.slice(1).find(word => !word.startsWith('-')) ?? ''
+      if (!staysInside(place, root)) return false
+    }
+    if (name === 'git') {
+      for (let i = 1; i < words.length; i++) {
+        const word = words[i] ?? ''
+        const joined = /^--(git-dir|work-tree)=(.*)$/.exec(word)
+        if (joined !== null && !staysInside(joined[2] ?? '', root)) return false
+        if (['-C', '--git-dir', '--work-tree'].includes(word) && !staysInside(words[i + 1] ?? '', root)) return false
+      }
+    }
+  }
+  return true
+}
+
+/**
+ * A plain push in a project the person freed with /push-livre: the session's
+ * git root is on the list and the command doesn't move to another place.
+ */
+async function isFreed($: EngineInterface, command: string, actions: readonly Action[]): Promise<boolean> {
+  if (!actions.every(action => action.kind === 'push')) return false
+  const repo = await $.session.repo().catch(() => null)
+  if (repo === null) return false
+  return (await freeRoots($)).includes(repo.root) && staysIn(command, repo.root)
+}
+
+function nameOf(root: string): string {
+  return root.slice(root.lastIndexOf('/') + 1) || root
 }
 
 // Verdicts already reached for the same messages, so a second push in the task does not ask again.
@@ -457,9 +523,45 @@ export const register: Register = on => {
     return next(e)
   }).catch(passThrough)
 
+  on('session.start', async ($, e, next) => {
+    await $.command.register({
+      name: COMMAND,
+      description: 'Libera o git push neste projeto sem perguntar (bloquear, ver)',
+      argumentHint: '[bloquear | ver]',
+    })
+    return next(e)
+  }).catch(passThrough)
+
+  // /push-livre frees the project, /push-livre bloquear asks again, /push-livre ver lists.
+  on('command.run', { command: COMMAND }, async ($, e) => {
+    if (!TYPED.has(e.origin.kind)) return { text: `push-gate: /${COMMAND} só vale digitado por você.` }
+    const what = fold(e.args.trim())
+    const roots = await freeRoots($)
+    if (what === 'ver' || what === 'lista' || what === 'listar') {
+      if (roots.length === 0) return { text: 'Nenhum projeto com o push liberado.' }
+      return { text: `Push liberado em:\n${roots.map(root => `  ${root}`).join('\n')}` }
+    }
+    const repo = await $.session.repo().catch(() => null)
+    if (repo === null) return { text: 'Este diretório não está num repositório git: não há projeto para liberar.' }
+    const project = nameOf(repo.root)
+    if (what === 'bloquear' || what === 'bloqueia' || what === 'travar') {
+      if (!roots.includes(repo.root)) return { text: `O push em ${project} já pede confirmação.` }
+      await $.store.set(FREE_KEY, roots.filter(root => root !== repo.root))
+      return { text: `Push em ${project} volta a pedir confirmação.` }
+    }
+    if (what !== '' && what !== 'liberar' && what !== 'libera') {
+      return { text: `Use /${COMMAND} para liberar, /${COMMAND} bloquear ou /${COMMAND} ver.` }
+    }
+    if (!roots.includes(repo.root)) await $.store.set(FREE_KEY, [...roots, repo.root])
+    return {
+      text: `Push liberado em ${project} (${repo.root}). Push forçado, deploy, publicar, merge e migração continuam pedindo. /${COMMAND} bloquear desfaz.`,
+    }
+  })
+
   on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
     const actions = risky(e.command)
     if (actions.length === 0) return next(e)
+    if (await isFreed($, e.command, actions).catch(() => false)) return next(e)
 
     const verdict = await judge($, actions)
     if (verdict.isAllowed) return next(e)

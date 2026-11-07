@@ -1,6 +1,6 @@
 {
   "name": "push-gate",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Blocks git push, deploys and publishes unless your own message asked for them",
   "types": "./types/index.d.ts",
   "author": {

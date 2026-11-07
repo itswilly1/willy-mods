@@ -1,5 +1,5 @@
 import type { On } from 'claude-code'
-import { expect, test } from 'claude-code/testing'
+import { expect, mock, test } from 'claude-code/testing'
 import type { Engine } from 'claude-code/testing'
 
 // The engine beneath the mod: tools answer, prompts go through, the
@@ -124,4 +124,66 @@ test('a failed check blocks', async ($, on) => {
 
   const ran = await $.tool.call({ tool: 'Bash', command: 'git push' })
   expect(JSON.stringify(ran)).toMatch(/não consegui confirmar/)
+})
+
+// A project of the person's: the session's git root, and the mod's store.
+const ROOT = '/Users/ana/Developer/app/sami'
+function project(on: On, stored: Record<string, unknown> = {}) {
+  mock.store(on, stored)
+  on('session.repo', () => ({ value: { root: ROOT, remote: null, internal: false, name: null } }))
+}
+const FREE = (args = '', kind: 'composer' | 'plugin' = 'composer') => ({
+  command: 'push-livre',
+  args,
+  origin: kind === 'plugin' ? { kind: 'plugin' as const, name: 'outro' } : { kind: 'composer' as const },
+})
+
+test('/push-livre frees a plain push in this project, and only that', async ($, on) => {
+  const classified = engine(on)
+  project(on)
+  await ask($, 'corrige o bug do login')
+
+  const freed = await $.command.run(FREE())
+  expect(JSON.stringify(freed)).toMatch(/Push liberado em sami/)
+  expect(isDenied(await $.tool.call({ tool: 'Bash', command: 'git add -A && git commit -m fix && git push' }))).toBe(false)
+  expect(isDenied(await $.tool.call({ tool: 'Bash', command: `cd ${ROOT} && git push origin main` }))).toBe(false)
+  expect(isDenied(await $.tool.call({ tool: 'Bash', command: 'cd web && git -C . push' }))).toBe(false)
+  expect(classified.length).toBe(0)
+
+  // A force push, a deploy and a push from another place still ask.
+  expect(isDenied(await $.tool.call({ tool: 'Bash', command: 'git push --force' }))).toBe(true)
+  expect(isDenied(await $.tool.call({ tool: 'Bash', command: 'fly deploy' }))).toBe(true)
+  expect(isDenied(await $.tool.call({ tool: 'Bash', command: 'cd ~/Developer/outro && git push' }))).toBe(true)
+  expect(isDenied(await $.tool.call({ tool: 'Bash', command: 'git -C ../outro push' }))).toBe(true)
+  expect(isDenied(await $.tool.call({ tool: 'Bash', command: 'git -C /Users/ana/Developer/app/sami-velho push' }))).toBe(true)
+})
+
+test('/push-livre bloquear asks again, and ver lists the freed projects', async ($, on) => {
+  engine(on)
+  project(on, { 'free-push': [ROOT, '/Users/ana/Developer/web/site'] })
+  await ask($, 'corrige o bug do login')
+
+  expect(JSON.stringify(await $.command.run(FREE('ver')))).toMatch(/sami[\s\S]*web\/site/)
+  expect(isDenied(await $.tool.call({ tool: 'Bash', command: 'git push' }))).toBe(false)
+  expect(JSON.stringify(await $.command.run(FREE('bloquear')))).toMatch(/volta a pedir/)
+  expect(isDenied(await $.tool.call({ tool: 'Bash', command: 'git push' }))).toBe(true)
+  expect(JSON.stringify(await $.command.run(FREE('ver')))).not.toMatch(/app\/sami/)
+})
+
+test('only the person frees a project', async ($, on) => {
+  engine(on)
+  project(on)
+  await ask($, 'corrige o bug do login')
+
+  expect(JSON.stringify(await $.command.run(FREE('', 'plugin')))).toMatch(/só vale digitado por você/)
+  expect(isDenied(await $.tool.call({ tool: 'Bash', command: 'git push' }))).toBe(true)
+})
+
+test('a blocked push says how to free the project', async ($, on) => {
+  engine(on)
+  project(on)
+  await ask($, 'corrige o bug do login')
+
+  expect(JSON.stringify(await $.tool.call({ tool: 'Bash', command: 'git push' }))).toMatch(/\/push-livre/)
+  expect(JSON.stringify(await $.tool.call({ tool: 'Bash', command: 'fly deploy' }))).not.toMatch(/\/push-livre/)
 })
