@@ -2,7 +2,7 @@
 description: Fecha a sessão com segurança, deixando o projeto pronto para continuar depois (registros, docs, memória, commit)
 argument-hint: [observação opcional]
 disable-model-invocation: true
-allowed-tools: Bash(git rev-parse *) Bash(git status *) Bash(git log *) Bash(pwd) Bash(date *)
+allowed-tools: Bash(git rev-parse *) Bash(git status *) Bash(git log *) Bash(pwd) Bash(date *) Bash(pgrep *)
 ---
 
 O usuário vai encerrar esta sessão e continuar depois, numa sessão nova que não verá esta conversa. Deixe o projeto de um jeito que essa sessão nova continue sem refazer trabalho, sem perder decisões e sem adivinhar.
@@ -35,6 +35,8 @@ Commits ainda não enviados: !`git log --oneline @{u}..HEAD 2>/dev/null | head -
 4. **Memória.** Salve na memória só o que vale entre sessões e não está no repositório: correções que o usuário fez no seu jeito de trabalhar, preferências novas, fatos do projeto que não estão no código. Atualize uma memória que já cobre o assunto em vez de criar outra. Não repita na memória o que acabou de ir para o "Onde paramos".
 
 5. **Limpeza.** Desligue os servidores e processos que você ligou nesta sessão e apague as sobras temporárias que você criou. Não toque no que o usuário ligou (por exemplo um servidor local dele) nem nos servidores fixos do ambiente; se algo dele ficou com dados de teste seus, diga.
+   - **Navegador headless órfão.** Rode `pgrep -fl "remote-debugging-port|headless"`. Um Chrome/Chromium aberto por automação que sobrevive ao script fica órfão e pode ocupar vários núcleos por horas, principalmente com `swiftshader`, que renderiza a GPU na CPU. Encerre os que esta sessão abriu (perfil temporário em `/var/folders/.../T`, porta de debug que você usou). Se achar algum que não reconhece, não mate: liste o PID, as flags e o tempo rodando e pergunte.
+   - Se o script que abriu o navegador não o fecha sozinho (`try/finally`, `SIGINT`/`SIGTERM`, timeout), anote no "Onde paramos" como pendente.
 
 6. **Commit.** Faça o commit do que é desta sessão, separando assuntos diferentes, no idioma e no estilo dos commits do projeto. Não junte mudanças de outra sessão que você não reconhece: avise. Push só se o projeto estiver liberado (`/push-livre`) ou se o usuário pedir; nunca deploy, migração em produção ou publicação.
 
