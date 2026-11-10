@@ -39,6 +39,11 @@
       "name": "end-go",
       "source": "./plugins/end-go",
       "description": "/end closes a session leaving the project ready to resume; /go picks it up in the next one"
+    },
+    {
+      "name": "marca-pergunta",
+      "source": "./plugins/marca-pergunta",
+      "description": "Your own questions in a soft yellow highlighter, with a band that jumps back to them"
     }
   ],
   "description": "Willy's Claude Code mods"

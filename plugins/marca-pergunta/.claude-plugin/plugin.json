@@ -1,0 +1,11 @@
+{
+  "name": "marca-pergunta",
+  "version": "0.1.0",
+  "description": "Your own questions in a soft yellow highlighter, with a band that jumps back to them",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "Willy Fernandes"
+  },
+  "license": "MIT",
+  "repository": "https://github.com/itswilly1/willy-mods"
+}
