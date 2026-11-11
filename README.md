@@ -14,7 +14,7 @@ Mods for [Claude Code](https://claude.com/claude-code): plugins whose hooks are 
 | [`icon-picker`](plugins/icon-picker) | `/icone` opens a pane of Nerd Font glyphs picked for the project, leaving out the ones your other projects under `~/Developer` already use and the ones your terminal font lacks (checked with Ghostty), and writes the pick to `.claude/icon`. A git project with no icon gets the first suggestion at session start, but only where git ignores that file. |
 | [`end-go`](plugins/end-go) | Two skills you type: `/end` before closing a session (rewrites the project's "Onde paramos" with what was done, decided and is next, updates what the project's rules ask for, saves memories, stops what it started and commits; never pushes unless you ask) and `/go` at the start of the next one (reads that record, checks it against git, runs the quick tests and says the next step, then waits). |
 | [`spinner-ptbr`](plugins/spinner-ptbr) | Portuguese spinner words ("Matutando…", "Garimpando…") and turn line ("✻ Garimpou por 1m 4s"). |
-| [`marca-pergunta`](plugins/marca-pergunta) | Draws each question you typed in a soft yellow highlighter, so it stands out from Claude's replies. Once your latest question scrolls out of view, a band above the prompt offers `↑ anterior`, `↓ próxima` and `última`, which scroll the conversation back to your questions (click them, or `k`, `j`, `u` after ctrl+x tab). Messages from tasks, agents and teammates keep their usual look. |
+| [`marca-pergunta`](plugins/marca-pergunta) | Draws each question you typed in a soft yellow highlighter, so it stands out from Claude's replies. Messages from tasks, agents and teammates keep their usual look. |
 
 The mods speak Brazilian Portuguese. Two bands at once:
 
