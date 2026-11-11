@@ -38,7 +38,7 @@ Commits ainda não enviados: !`git log --oneline @{u}..HEAD 2>/dev/null | head -
    - **Navegador headless órfão.** Rode `pgrep -fl "remote-debugging-port|headless"`. Um Chrome/Chromium aberto por automação que sobrevive ao script fica órfão e pode ocupar vários núcleos por horas, principalmente com `swiftshader`, que renderiza a GPU na CPU. Encerre os que esta sessão abriu (perfil temporário em `/var/folders/.../T`, porta de debug que você usou). Se achar algum que não reconhece, não mate: liste o PID, as flags e o tempo rodando e pergunte.
    - Se o script que abriu o navegador não o fecha sozinho (`try/finally`, `SIGINT`/`SIGTERM`, timeout), anote no "Onde paramos" como pendente.
 
-6. **Commit.** Faça o commit do que é desta sessão, separando assuntos diferentes, no idioma e no estilo dos commits do projeto. Não junte mudanças de outra sessão que você não reconhece: avise. Push só se o projeto estiver liberado (`/push-livre`) ou se o usuário pedir; nunca deploy, migração em produção ou publicação.
+6. **Commit.** Faça o commit do que é desta sessão, separando assuntos diferentes, no idioma e no estilo dos commits do projeto. Não junte mudanças de outra sessão que você não reconhece: avise. Push só se o usuário pedir; nunca deploy, migração em produção ou publicação.
 
 7. **Confira.** Rode `git status` e confirme que não sobrou nada desta sessão sem commit.
 

@@ -16,11 +16,6 @@
       "description": "Small thumbnails of the screenshots Claude takes or reads, with a button that opens them"
     },
     {
-      "name": "push-gate",
-      "source": "./plugins/push-gate",
-      "description": "Blocks git push, deploys and publishes unless your own message asked for them"
-    },
-    {
       "name": "mac-app-runner",
       "source": "./plugins/mac-app-runner",
       "description": "Band above the prompt for the Mac app Xcode built that is open now: how long it has run, a newer build, reopen and close"
@@ -43,7 +38,7 @@
     {
       "name": "marca-pergunta",
       "source": "./plugins/marca-pergunta",
-      "description": "Your own questions in a soft yellow highlighter, with a band that jumps back to them"
+      "description": "Your own questions in a soft yellow highlighter"
     }
   ],
   "description": "Willy's Claude Code mods"
