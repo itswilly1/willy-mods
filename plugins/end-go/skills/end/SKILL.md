@@ -2,7 +2,7 @@
 description: Fecha a sessão com segurança, deixando o projeto pronto para continuar depois (registros, docs, memória, commit)
 argument-hint: [observação opcional]
 disable-model-invocation: true
-allowed-tools: Bash(git rev-parse *) Bash(git status *) Bash(git log *) Bash(pwd) Bash(date *) Bash(pgrep *)
+allowed-tools: Bash(git rev-parse *) Bash(git status *) Bash(git log *) Bash(pwd) Bash(date *) Bash(pgrep *) Bash(/bin/ls *) Bash(node ~/Developer/backstage/tools/bs.mjs *)
 ---
 
 O usuário vai encerrar esta sessão e continuar depois, numa sessão nova que não verá esta conversa. Deixe o projeto de um jeito que essa sessão nova continue sem refazer trabalho, sem perder decisões e sem adivinhar.
@@ -17,6 +17,8 @@ O que está sem commit: !`git status --short 2>/dev/null | head -40`
 
 Commits ainda não enviados: !`git log --oneline @{u}..HEAD 2>/dev/null | head -20`
 
+A CLI do backstage (vazio se este computador não tem): !`/bin/ls ~/Developer/backstage/tools/bs.mjs 2>/dev/null`
+
 ## Passos, nesta ordem
 
 1. **Onde os registros ficam.** Leia o `CLAUDE.md` do projeto (e os arquivos que ele importa com `@`) e ache onde o projeto guarda o andamento: o plano, o "Onde paramos", o manual, o changelog, o `IDEIAS.md`. Siga o que o projeto manda; se ele não tiver um lugar para o andamento, use o `PLANO.md` (crie se faltar, com uma seção "Onde paramos").
@@ -28,24 +30,30 @@ Commits ainda não enviados: !`git log --oneline @{u}..HEAD 2>/dev/null | head -
    - o próximo passo, um só, concreto;
    - os comandos para conferir (testes, build, roteiros) e o último resultado deles;
    - o que está no ar e o que não está (deploy, versão);
-   - o que depende do usuário (decidir, testar, aprovar, pedir deploy).
+   - o que depende do usuário (decidir, testar, aprovar, pedir deploy). Com backstage, isso não fica aqui: vai para o painel (passo 4), e aqui fica uma linha dizendo onde.
 
 3. **Os outros registros que o projeto exige junto.** Se uma regra do projeto manda atualizar algo quando o código muda (manual, docs, briefing, prints), confira se foi feito nesta sessão; se não, faça agora ou anote no "Onde paramos" como pendente.
 
-4. **Memória.** Salve na memória só o que vale entre sessões e não está no repositório: correções que o usuário fez no seu jeito de trabalhar, preferências novas, fatos do projeto que não estão no código. Atualize uma memória que já cobre o assunto em vez de criar outra. Não repita na memória o que acabou de ir para o "Onde paramos".
+4. **O backstage** (só se a CLI acima existe e o projeto tem pasta lá; `bs` é `node ~/Developer/backstage/tools/bs.mjs`, da pasta do projeto).
+   - **As telas:** `bs agora`. Uma tela que esta sessão pegou e terminou ganha o print (`bs print <id> <arquivo>`); a que não terminou é solta (`bs soltar <id>`) e entra no "pela metade" do "Onde paramos". Nenhuma fica em "fazendo agora".
+   - **O que depende do usuário:** cada coisa para ele fazer vira `bs pedir <id> "<o que fazer>"`, e cada decisão, `bs perguntar <id> "<pergunta>" "<opção>" "<opção>"`. O que ele já respondeu e você já fez, `bs fechar <id>`. `bs pendentes` mostra o que já está lá: não repita.
+   - **Prints** que ficaram soltos numa pasta temporária e o usuário precisa ver: `bs guardar <arquivo> --assunto "…"`.
+   - **Backup:** se a sessão criou ou trocou imagens lá, `bs backup`.
 
-5. **Limpeza.** Desligue os servidores e processos que você ligou nesta sessão e apague as sobras temporárias que você criou. Não toque no que o usuário ligou (por exemplo um servidor local dele) nem nos servidores fixos do ambiente; se algo dele ficou com dados de teste seus, diga.
+5. **Memória.** Salve na memória só o que vale entre sessões e não está no repositório: correções que o usuário fez no seu jeito de trabalhar, preferências novas, fatos do projeto que não estão no código. Atualize uma memória que já cobre o assunto em vez de criar outra. Não repita na memória o que acabou de ir para o "Onde paramos".
+
+6. **Limpeza.** Desligue os servidores e processos que você ligou nesta sessão e apague as sobras temporárias que você criou. Não toque no que o usuário ligou (por exemplo um servidor local dele) nem nos servidores fixos do ambiente; se algo dele ficou com dados de teste seus, diga.
    - **Navegador headless órfão.** Rode `pgrep -fl "remote-debugging-port|headless"`. Um Chrome/Chromium aberto por automação que sobrevive ao script fica órfão e pode ocupar vários núcleos por horas, principalmente com `swiftshader`, que renderiza a GPU na CPU. Encerre os que esta sessão abriu (perfil temporário em `/var/folders/.../T`, porta de debug que você usou). Se achar algum que não reconhece, não mate: liste o PID, as flags e o tempo rodando e pergunte.
    - Se o script que abriu o navegador não o fecha sozinho (`try/finally`, `SIGINT`/`SIGTERM`, timeout), anote no "Onde paramos" como pendente.
 
-6. **Commit.** Faça o commit do que é desta sessão, separando assuntos diferentes, no idioma e no estilo dos commits do projeto. Não junte mudanças de outra sessão que você não reconhece: avise. Push só se o usuário pedir; nunca deploy, migração em produção ou publicação.
+7. **Commit.** Faça o commit do que é desta sessão, separando assuntos diferentes, no idioma e no estilo dos commits do projeto. Com backstage, também o commit de lá, só com a pasta deste projeto (e o que esta sessão mudou no painel ou na CLI). Não junte mudanças de outra sessão que você não reconhece: avise. Push só se o usuário pedir; nunca deploy, migração em produção ou publicação.
 
-7. **Confira.** Rode `git status` e confirme que não sobrou nada desta sessão sem commit.
+8. **Confira.** Rode `git status` (com backstage, lá também) e confirme que não sobrou nada desta sessão sem commit.
 
 ## No fim, responda só isto
 
 - **Pronto para encerrar** (ou, se algo impediu, o que impediu e o que falta).
 - Uma linha com os commits feitos e se foram para o remoto.
 - O próximo passo, numa frase.
-- O que depende do usuário, em itens curtos (ou "nada").
+- O que depende do usuário, em itens curtos (ou "nada"). Com backstage: a contagem do que espera ele no painel e o endereço, com o que entrou nesta sessão em itens.
 - "Para continuar: numa sessão nova, diga `continuar`."

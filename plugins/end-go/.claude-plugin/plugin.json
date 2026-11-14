@@ -1,7 +1,7 @@
 {
   "name": "end-go",
-  "version": "0.1.0",
-  "description": "/end closes a session leaving the project ready to resume; /go picks it up in the next one",
+  "version": "0.2.0",
+  "description": "/start sets a project up, /end closes a session leaving it ready to resume, /go picks it up in the next one",
   "author": {
     "name": "Willy Fernandes"
   },

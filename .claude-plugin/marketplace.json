@@ -33,7 +33,7 @@
     {
       "name": "end-go",
       "source": "./plugins/end-go",
-      "description": "/end closes a session leaving the project ready to resume; /go picks it up in the next one"
+      "description": "/start sets a project up, /end closes a session leaving it ready to resume, /go picks it up in the next one"
     },
     {
       "name": "marca-pergunta",
