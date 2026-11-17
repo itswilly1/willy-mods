@@ -22,10 +22,11 @@ type Run = { exitCode: number; stdout: string; stderr: string; isStdoutTruncated
 const ran = (stdout = '', exitCode = 0): Run => ({ exitCode, stdout, stderr: '', isStdoutTruncated: false, isStderrTruncated: false })
 
 // ps lists what runs; the executables were last written at `builtAt`.
-function engine(on: On, state: { ps: string; builtAt: Record<string, number> }) {
+function engine(on: On, state: { ps: string; builtAt: Record<string, number>; root?: string }) {
   const runs: string[][] = []
   const clock = mock.clock(on, { now: NOW })
   on('session.start', (_, e) => ({ cwd: e.cwd }))
+  on('session.root', () => ({ value: state.root ?? '/' }))
   on('tool.call', () => ({ result: { stdout: '', stderr: '', interrupted: false } }))
   on('process.run', (_, e) => {
     runs.push([...e.argv])
@@ -101,5 +102,50 @@ test('no app open: the band is the engine\'s', async ($, on) => {
 
   const ui = await $.ui.mount({ ...BAND, surface: 'desktop' })
   expect((await ui.find({ type: 'Text' }))?.text).toBe('engine band')
+  await ui.unmount()
+})
+
+const PLIST = (workspace: string) =>
+  `<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0">\n<dict>\n\t<key>LastAccessedDate</key>\n\t<date>2026-11-17T12:00:00Z</date>\n\t<key>WorkspacePath</key>\n\t<string>${workspace}</string>\n</dict>\n</plist>\n`
+
+test('each session shows only the apps its own project builds', async ($, on) => {
+  const { clock } = engine(on, {
+    ps: ` 4242 03:10 ${GAROA}/Contents/MacOS/Garoa\n 9 1:02:03 ${RAIO}/Contents/MacOS/Raio Beta\n`,
+    builtAt: {},
+    root: '/Users/w/Developer/app/garoa',
+  })
+  on('fs.read', (_, e) =>
+    e.path === '/Users/w/Library/Developer/Xcode/DerivedData/Garoa-abc/info.plist'
+      ? { value: PLIST('/Users/w/Developer/app/garoa/apple/Garoa.xcodeproj') }
+      : { deny: 'ENOENT' },
+  )
+  await $.session.start({ cwd: '/Users/w/Developer/app/garoa', surface: 'terminal', isInteractive: true })
+  await clock.advance(10)
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  expect(await ui.find({ type: 'Text', text: /Garoa/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /Raio Beta/ })).toBeUndefined()
+  await ui.unmount()
+})
+
+test('another project\'s app leaves the band to the engine', async ($, on) => {
+  const { clock } = engine(on, { ps: ` 4242 03:10 ${GAROA}/Contents/MacOS/Garoa\n`, builtAt: {}, root: '/Users/w/Developer/app/sami' })
+  on('fs.read', () => ({ value: PLIST('/Users/w/Developer/app/garoa/Garoa.xcodeproj') }))
+  await $.session.start({ cwd: '/Users/w/Developer/app/sami', surface: 'terminal', isInteractive: true })
+  await clock.advance(10)
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  expect((await ui.find({ type: 'Text' }))?.text).toBe('engine band')
+  await ui.unmount()
+})
+
+test('a -derivedDataPath build inside the project counts as the project\'s', async ($, on) => {
+  const { clock } = engine(on, { ps: ` 9 1:02:03 ${RAIO}/Contents/MacOS/Raio Beta\n`, builtAt: {}, root: '/Users/w/Developer/app/raio' })
+  on('fs.read', () => ({ deny: 'ENOENT' }))
+  await $.session.start({ cwd: '/Users/w/Developer/app/raio', surface: 'terminal', isInteractive: true })
+  await clock.advance(10)
+
+  const ui = await $.ui.mount({ ...BAND, surface: 'terminal' })
+  expect(await ui.find({ type: 'Text', text: /Raio Beta/ })).toBeDefined()
   await ui.unmount()
 })

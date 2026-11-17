@@ -56,11 +56,35 @@ function isStale(app: App): boolean {
   return app.builtAt > app.startedAt + 2_000
 }
 
+// Xcode writes the project a DerivedData folder belongs to in its info.plist.
+const WORKSPACE_PATH = /<key>WorkspacePath<\/key>\s*<string>([^<]+)<\/string>/
+// DerivedData folder → the project folder it builds. Folders do not change owner.
+const projectOf = new Map<string, string>()
+
+function isInside(path: string, root: string): boolean {
+  return root === '/' || path === root || path.startsWith(`${root}/`)
+}
+
+/** The folder of the Xcode project that built the bundle; the DerivedData folder when unknown. */
+async function projectFolder($: EngineInterface, bundle: string): Promise<string> {
+  const derived = bundle.slice(0, bundle.lastIndexOf('/Build/Products/'))
+  const known = projectOf.get(derived)
+  if (known !== undefined) return known
+  const plist = await $.fs.read(`${derived}/info.plist`).catch(() => undefined)
+  const workspace = typeof plist === 'string' ? WORKSPACE_PATH.exec(plist)?.[1] : undefined
+  const folder = workspace === undefined ? derived : workspace.slice(0, workspace.lastIndexOf('/'))
+  projectOf.set(derived, folder)
+  return folder
+}
+
+/** Only the apps this session's project builds: every session runs its own band. */
 async function scan($: EngineInterface): Promise<App[] | undefined> {
   const out = await $.process.run(['ps', '-axo', 'pid=,etime=,comm='], { timeoutMs: 5_000 }).catch(() => undefined)
   if (out === undefined || out.exitCode !== 0) return undefined
 
   const now = await $.clock.now()
+  const root = await $.session.root().catch(() => undefined)
+  if (root === undefined) return undefined
   const found: App[] = []
   for (const line of out.stdout.split('\n')) {
     const row = /^\s*(\d+)\s+(\S+)\s+(.+?)\s*$/.exec(line)
@@ -68,11 +92,13 @@ async function scan($: EngineInterface): Promise<App[] | undefined> {
     const binary = row[3] ?? ''
     const app = BUILT_APP.exec(binary)
     if (app === null) continue
+    const bundle = app[1] ?? binary
+    if (!isInside(await projectFolder($, bundle), root)) continue
     const stat = await $.fs.stat(binary).catch(() => undefined)
     found.push({
       pid: Number(row[1]),
       name: app[3] ?? binary,
-      bundle: app[1] ?? binary,
+      bundle,
       binary,
       config: app[2] ?? 'Debug',
       startedAt: now - elapsedOf(row[2] ?? '0:0'),
